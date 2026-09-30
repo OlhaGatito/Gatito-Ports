@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Gatito Extractor: small, auditable BYO-data extraction core."""
-import argparse, hashlib, json, os, shutil, tempfile, zipfile
+import argparse, hashlib, json, os, shutil, tempfile, time, zipfile
 from pathlib import Path, PurePosixPath
 
 VERSION = "0.1.0"
@@ -69,22 +69,38 @@ def validate(stage, rules):
             allowed = rule["sha256"] if isinstance(rule["sha256"], list) else [rule["sha256"]]
             if digest(path) not in allowed: raise ExtractError("sha256 mismatch: %s" % rule["path"])
 
+def emit(pct, message):
+    print("GATITO_STAGE|%d|%s" % (max(0, min(100, int(pct))), message), flush=True)
+
 def main():
     p = argparse.ArgumentParser(description="Gatito Extractor — BYO-data")
     p.add_argument("--version", action="version", version=VERSION)
     p.add_argument("recipe", type=Path); p.add_argument("--game-dir", type=Path, required=True)
     p.add_argument("--input", action="append", default=[]); p.add_argument("--abi")
+    p.add_argument("--validation-delay", type=float, default=0.35)
     a = p.parse_args(); r = recipe(a.recipe)
+    emit(2, "Preparando")
     abi = a.abi or (r.get("abi_order") or [""])[0]
     if a.abi and a.abi not in r.get("abi_order", []): raise ExtractError("ABI not allowed")
     paths = inputs(a.game_dir, a.input)
+    emit(12, "Dados do usuário encontrados")
     work = a.game_dir / ".gatito-extract"; work.mkdir(exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix="stage-", dir=work))
     try:
-        for rule in r["extract"]:
+        total = max(1, len(r["extract"]))
+        for index, rule in enumerate(r["extract"], 1):
+            emit(20 + int((index - 1) * 55 / total), "Extraindo: %s" % rule["destination"])
             src, member = find_source(paths, rule["source"]["patterns"], abi)
-            copy_entry(src, member, stage / safe_rel(rule["destination"].replace("{abi}", abi)))
+            destination = stage / safe_rel(rule["destination"].replace("{abi}", abi))
+            copy_entry(src, member, destination)
+            if not destination.is_file() or destination.stat().st_size == 0:
+                raise ExtractError("stage validation failed: %s" % rule["destination"])
+            emit(20 + int(index * 55 / total), "Validando: %s" % rule["destination"])
+            time.sleep(max(0.0, a.validation_delay))
         validate(stage, r.get("validate", []))
+        emit(82, "Validação final do staging")
+        time.sleep(max(0.0, a.validation_delay))
+        emit(90, "Publicando payload validado")
         target = a.game_dir / safe_rel(r["commit"].get("root", "game"))
         old = target.with_name(target.name + ".gatito-old")
         if old.exists(): shutil.rmtree(old)
@@ -98,6 +114,7 @@ def main():
         (target / ".gatito-extract.json").write_text(
             json.dumps({"recipe": r["id"], "version": r["version"], "abi": abi}, indent=2) + "\n",
             encoding="utf-8")
+        emit(100, "Concluído")
         print("GATITO EXTRACT OK: %s %s" % (r["id"], r["version"]))
     except Exception as e:
         shutil.rmtree(stage, ignore_errors=True); print("GATITO EXTRACT ERROR: %s" % e, file=os.sys.stderr); return 1
