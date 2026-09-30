@@ -28,7 +28,7 @@ Um pacote de release poderá conter launcher, runtime/loader redistribuível, pe
 
 Um perfil identifica pelo menos dispositivo/revisão, CFW/release, SoC/GPU, kernel, ABI, SDL/runtime e backend de vídeo. O nome do CFW isolado não seleciona driver. Sem correspondência exata, o launcher preserva o ambiente fornecido por PortMaster/CFW e registra `UNKNOWN`.
 
-Profiles ficam ligados a resultados físicos específicos. O inventário de biblioteca disponível não basta para dizer qual driver foi carregado; o resultado precisa de log ou inspeção do processo ativo.
+Perfis ficam ligados a resultados físicos específicos. O inventário de biblioteca disponível não basta para dizer qual driver foi carregado; o resultado precisa de log ou inspeção do processo ativo.
 
 ## Ferramentas compartilhadas
 
@@ -40,6 +40,6 @@ Profiles ficam ligados a resultados físicos específicos. O inventário de bibl
 
 Cada ferramenta nasce com um caso real, fixtures sem dados de jogo e limite de compatibilidade documentado. Ferramentas planejadas não fazem parte da release atual.
 
-## Relação com o catálogo de pesquisa
+## Evidências de pesquisa
 
-O repositório privado [Main / PortMaster-Catalog](https://github.com/OlhaGatito/Main/tree/portmaster-compatibility-catalog) mantém notas técnicas detalhadas. Este repositório público contém somente material que pode ser publicado. Evidência deve ser revisada e sanitizada antes de copiar; caminhos pessoais, logs completos e hashes de conteúdo comercial não são publicados automaticamente.
+As notas técnicas internas do proprietário ajudam a orientar as fichas públicas, mas não são copiadas automaticamente. Evidências devem ser revisadas e sanitizadas antes de publicação; caminhos pessoais, logs completos e hashes de conteúdo comercial não são publicados.
