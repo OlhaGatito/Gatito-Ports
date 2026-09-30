@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "project": "Gatito Ports",
+  "data_policy": "BYO game data; no game data, proprietary libraries, saves, or assets are shipped.",
+  "ports": [
+    {
+      "id": "nfs-shift",
+      "title": "Need for Speed Shift",
+      "source_platform": "Android",
+      "runtime": "Marmalade S3E",
+      "target_abi": "ARM32 hard-float",
+      "status": "prototype",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [
+        {
+          "device": "Anbernic RG40XX-H",
+          "system": "muOS",
+          "result": "Playable at 640x480; audio is missing.",
+          "evidence_level": "physical-test-with-issues"
+        }
+      ],
+      "next_step": "Investigate audio independently while preserving the previously playable launcher/runtime path."
+    },
+    {
+      "id": "the-sims-3",
+      "title": "The Sims 3",
+      "source_platform": "Android",
+      "runtime": "Marmalade S3E",
+      "target_abi": "ARM32 hard-float",
+      "status": "investigation",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [
+        {
+          "device": "RG351MP",
+          "system": "dArkOSRE",
+          "result": "Available log confirms loader validation only; full game outcome is unknown.",
+          "evidence_level": "incomplete-log"
+        }
+      ],
+      "next_step": "Reproduce with a complete log and preserve the known-good audio environment while reviewing launcher changes."
+    },
+    {
+      "id": "sonic-4-episode-i",
+      "title": "Sonic 4 Episode I",
+      "source_platform": "Android",
+      "runtime": "Marmalade S3E",
+      "target_abi": "ARM32",
+      "status": "investigation",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Verify the exact APK/version, OBB, ABI, assets, and expected S3E before further loader or graphics work."
+    },
+    {
+      "id": "minishoots-adventure",
+      "title": "Minishoots Adventure",
+      "source_platform": "Android",
+      "runtime": "Unity 6 IL2CPP",
+      "target_abi": "AArch64",
+      "status": "investigation",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Validate the matching game binary and metadata, then identify the runtime contract before selecting a graphics stack."
+    },
+    {
+      "id": "dungeon-hunter-4",
+      "title": "Dungeon Hunter 4",
+      "source_platform": "Android",
+      "runtime": "Native Android application; runtime contract not yet confirmed",
+      "target_abi": "ARMv7; float ABI not confirmed",
+      "status": "investigation",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Inspect ELF dependencies, Bionic/JNI requirements, OBB access, input events, and graphics initialization."
+    }
+  ]
+}
