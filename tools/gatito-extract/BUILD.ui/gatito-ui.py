@@ -20,7 +20,7 @@ def main():
     ap.add_argument("--abi")
     ns=ap.parse_args()
     root=Path(__file__).resolve().parents[1]
-    engine=root/"gatito-extract.py"
+    engine=root/"gatito-extract-v2.py"
     cmd=[sys.executable,str(engine),ns.recipe,"--game-dir",ns.game_dir,"--validation-delay","0.35"]
     if ns.abi: cmd += ["--abi",ns.abi]
     draw(0,"Iniciando")
