@@ -1,8 +1,23 @@
-# Gatito Ports
+<div align="center">
 
-Ports e ferramentas de compatibilidade para handhelds Linux, começando pelos projetos Android/Marmalade e Unity investigados pelo Gatito.
+# 🐈 Gatito Ports
 
-**Estado:** fundação do projeto. As fichas do catálogo representam pesquisa e protótipos; não são releases prontas para instalar.
+### Ports e ferramentas de compatibilidade para handhelds Linux
+
+Projetos Android, Marmalade S3E e Unity em pesquisa — com foco em ports reproduzíveis, perfis seguros e dados fornecidos pelo usuário.
+
+[![Status](https://img.shields.io/badge/status-pesquisa%20e%20prot%C3%B3tipos-f59e0b?style=for-the-badge)](https://github.com/OlhaGatito/Gatito-Ports)
+[![Catálogo](https://img.shields.io/badge/ports-5%20catalogados-2563eb?style=for-the-badge)](catalog/ports.json)
+[![Dados](https://img.shields.io/badge/jogos-dados%20do%20usu%C3%A1rio-16a34a?style=for-the-badge)](#aviso-sobre-dados-e-licen%C3%A7a)
+[![Releases](https://img.shields.io/badge/releases-ainda%20n%C3%A3o%20publicadas-64748b?style=for-the-badge)](https://github.com/OlhaGatito/Gatito-Ports/releases)
+
+[📚 Catálogo](catalog/ports.json) · [🧭 Roadmap](docs/ROADMAP.md) · [🧩 Arquitetura](docs/ARCHITECTURE.md) · [🛠️ Ferramentas](tools/README.md)
+
+</div>
+
+---
+
+**Estado do projeto:** fundação em andamento. As fichas abaixo representam pesquisa e protótipos; ainda não são ports prontos para instalar.
 
 ## O que queremos construir
 
@@ -22,7 +37,7 @@ Ports e ferramentas de compatibilidade para handhelds Linux, começando pelos pr
 | Minishoots Adventure | Android / Unity 6 IL2CPP / ARM64 | Investigação de binário, metadata e runtime |
 | Dungeon Hunter 4 | Android / ARMv7 | Investigação de ABI, JNI/Bionic, OBB, gráficos e input |
 
-O estado inicial fica em [`catalog/ports.json`](catalog/ports.json). O [modelo de arquitetura](docs/ARCHITECTURE.md), o [roadmap](docs/ROADMAP.md) e o [modelo de relatório de compatibilidade](docs/COMPATIBILITY-REPORT-TEMPLATE.md) registram como vamos transformar essas investigações em ports reproduzíveis.
+O estado inicial fica em [catalog/ports.json](catalog/ports.json). O [modelo de arquitetura](docs/ARCHITECTURE.md), o [roadmap](docs/ROADMAP.md) e o [modelo de relatório de compatibilidade](docs/COMPATIBILITY-REPORT-TEMPLATE.md) registram como vamos transformar essas investigações em ports reproduzíveis.
 
 ## Princípios
 
@@ -35,11 +50,11 @@ O estado inicial fica em [`catalog/ports.json`](catalog/ports.json). O [modelo d
 
 ## Primeira ferramenta
 
-`tools/gatito-probe.sh` coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md).
+[tools/gatito-probe.sh](tools/gatito-probe.sh) coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md).
 
 ## Próximos passos
 
-Veja [`docs/ROADMAP.md`](docs/ROADMAP.md) para as fases de catálogo, diagnóstico, instalação de dados, launcher por perfil e publicação.
+Veja [docs/ROADMAP.md](docs/ROADMAP.md) para as fases de catálogo, diagnóstico, instalação de dados, launcher por perfil e publicação.
 
 ## Base técnica
 
