@@ -22,7 +22,7 @@ Ports e ferramentas de compatibilidade para handhelds Linux, começando pelos pr
 | Minishoots Adventure | Android / Unity 6 IL2CPP / ARM64 | Investigação de binário, metadata e runtime |
 | Dungeon Hunter 4 | Android / ARMv7 | Investigação de ABI, JNI/Bionic, OBB, gráficos e input |
 
-O estado detalhado fica em [`catalog/ports.json`](catalog/ports.json). A pesquisa completa e evidências históricas ficam no [catálogo técnico](https://github.com/OlhaGatito/Main/tree/portmaster-compatibility-catalog).
+O estado inicial fica em [`catalog/ports.json`](catalog/ports.json). O [modelo de arquitetura](docs/ARCHITECTURE.md), o [roadmap](docs/ROADMAP.md) e o [modelo de relatório de compatibilidade](docs/COMPATIBILITY-REPORT-TEMPLATE.md) registram como vamos transformar essas investigações em ports reproduzíveis.
 
 ## Princípios
 
@@ -35,7 +35,7 @@ O estado detalhado fica em [`catalog/ports.json`](catalog/ports.json). A pesquis
 
 ## Primeira ferramenta
 
-`tools/gatito-probe.sh` coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais.
+`tools/gatito-probe.sh` coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md).
 
 ## Próximos passos
 
