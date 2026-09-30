@@ -128,9 +128,11 @@ class SDLUI:
             if driver == "fbcon" and not os.path.exists("/dev/fb0"): continue
             os.environ["SDL_VIDEODRIVER"]=driver
             if L.SDL_Init(0x00000020 | 0x00002000) == 0:
-                self.window=L.SDL_CreateWindow(b"Gatito-Extrator",0,0,640,480,0x00000008)
+                self.window=L.SDL_CreateWindow(b"Gatito-Extrator",0,0,640,480,0x00000005)
                 if self.window:
                     self.renderer=L.SDL_CreateRenderer(self.window,-1,2)
+                    if not self.renderer:
+                        self.renderer=L.SDL_CreateRenderer(self.window,-1,1)
                     if self.renderer:
                         self.enabled=True; self.w=640; self.h=480; return
                 L.SDL_Quit()
