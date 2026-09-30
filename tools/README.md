@@ -21,6 +21,21 @@ sh tools/gatito-probe.sh > gatito-system-report.txt 2>&1
 
 O probe não instala bibliotecas, não força backend, não inicia o jogo e não envia o relatório. Os caminhos e valores de ambiente podem identificar sua instalação; revise o arquivo antes de compartilhar. Arquivos encontrados são candidatos, não prova do driver ativo.
 
+
+
+### `gatito-extract`
+
+Extrator BYO-data baseado nos princípios do fluxo público do NXExtract: descoberta por conteúdo, receita declarativa, seleção de ABI, staging, validação e publicação segura.
+
+Arquivos:
+- [README](gatito-extract/README.md)
+- [gatito-extract.py](gatito-extract/gatito-extract.py)
+- [receita de exemplo](gatito-extract/extractor.example.json)
+
+A implementação do Gatito é própria. O NXExtract serve como referência arquitetural; não copiamos o código do NextOS. APK/OBB e dados proprietários continuam sendo fornecidos pelo usuário.
+
+Fluxo planejado: `scan` → `recipe-check` → extração → validação → journal/rollback → UI gráfica → integração PortMaster.
+
 ## Planejadas
 
 | Ferramenta | Objetivo | Estado |
