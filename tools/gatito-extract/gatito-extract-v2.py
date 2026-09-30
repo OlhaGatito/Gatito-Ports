@@ -87,7 +87,7 @@ def main():
             emit(84,'Checkpoint OK: '+hook.get('id','hook'))
         for rule in r.get('validate',[]): validate(stage,rule)
         emit(92,'Todos os artefatos foram validados')
-        target=game/safe((r.get('commit') or {}).get('root','game')); old=target.with_name(target.name+'.gatito-old')
+        commit=r.get('commit') or {}\n        root=commit.get('root','game') if isinstance(commit,dict) else 'game'\n        target=game/safe(root); old=target.with_name(target.name+'.gatito-old')
         if old.exists(): shutil.rmtree(old)
         if target.exists(): target.rename(old)
         try: stage.rename(target)
