@@ -97,16 +97,36 @@ def demo(log):
 
 
 def wait_menu(log, pct, stage, details):
+    """Test-only hold screen: any received key/button input closes the UI.
+
+    This is intentionally simple and temporary. On handhelds without a
+    keyboard, the terminal/input path used by the launcher can provide the
+    button event; the final graphical UI will use native controller events.
+    """
     draw(pct, stage, details, log, "SAIR")
-    print("\n[ENTER] SAIR    [Q] SAIR", flush=True)
-    while True:
-        try:
-            key = input("Selecione: ").strip().lower()
-        except EOFError:
+    print("\nPressione QUALQUER BOTÃO para sair.", flush=True)
+
+    # Read one character without requiring ENTER when stdin is a TTY.
+    # Fall back to input() if raw terminal mode is unavailable.
+    try:
+        import termios
+        import tty
+        fd = sys.stdin.fileno()
+        if os.isatty(fd):
+            old_attrs = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                sys.stdin.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
             return
-        if key in ("", "q", "quit", "exit", "sair"):
-            return
-        draw(pct, stage, details, log, "SAIR")
+    except (ImportError, OSError, termios.error, EOFError):
+        pass
+
+    try:
+        input()
+    except EOFError:
+        return
 
 
 def main():
