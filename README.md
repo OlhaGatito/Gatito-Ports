@@ -24,7 +24,7 @@ Projetos Android, Marmalade S3E e Unity em pesquisa — com foco em ports reprod
 - ports organizados por jogo e runtime, com suporte a vários CFWs quando houver teste real;
 - instalação dos dados a partir da cópia do usuário, sem distribuir APKs, OBBs, assets, saves ou bibliotecas proprietárias;
 - perfis de execução que identificam aparelho/CFW/stack com segurança e preservam o ambiente padrão quando não há perfil comprovado;
-- ferramentas próprias para inventário do aparelho, instalação transacional de dados, empacotamento e geração de catálogo;
+- ferramentas próprias para inventário do aparelho, extração/instalação transacional de dados, empacotamento e geração de catálogo;
 - registros de compatibilidade ligados ao aparelho, firmware, artefato e log testados.
 
 ## Projetos acompanhados
@@ -48,9 +48,9 @@ O estado inicial fica em [catalog/ports.json](catalog/ports.json). O [modelo de 
 5. Não marcar compatibilidade com um CFW por ter iniciado em outro aparelho ou firmware.
 6. Guardar artefatos e logs com identificador de versão, sem enviar conteúdo proprietário.
 
-## Primeira ferramenta
+## Ferramentas
 
-[tools/gatito-probe.sh](tools/gatito-probe.sh) coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md).
+[tools/gatito-probe.sh](tools/gatito-probe.sh) coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md). O [Gatito Extractor](tools/gatito-extract/README.md) é o novo ramo de ferramentas para extração BYO-data, baseado nos princípios públicos do NXExtract.
 
 ## Próximos passos
 
