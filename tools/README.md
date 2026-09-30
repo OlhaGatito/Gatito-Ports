@@ -34,14 +34,16 @@ Arquivos:
 
 A implementação do Gatito é própria. O NXExtract serve como referência arquitetural; não copiamos o código do NextOS. APK/OBB e dados proprietários continuam sendo fornecidos pelo usuário.
 
-Fluxo planejado: `scan` → `recipe-check` → extração → validação → journal/rollback → UI gráfica → integração PortMaster.
+Fluxo atual: `descoberta` → `extração` → `validação da etapa` → `validação final` → `publicação`.
+
+A pasta `BUILD.ui/` recebe eventos reais do motor e mantém uma barra central de progresso. Cada etapa só avança depois que o arquivo produzido foi confirmado. A pausa de validação é configurável e não representa progresso falso.
 
 ## Planejadas
 
 | Ferramenta | Objetivo | Estado |
 |---|---|---|
 | `gatito-profile` | Resolver perfis por fingerprint exato do aparelho/CFW/runtime, com fallback para o ambiente padrão | Planejamento; aguarda relatórios reais de vários aparelhos |
-| `gatito-extract` | Instalar dados BYO a partir de receitas, com staging, validação, retomada e rollback | Planejamento; escolher primeiro port com extração necessária |
+| `gatito-extract` | Instalar dados BYO a partir de receitas, com staging, validação por etapa e UI de progresso | Implementação inicial; integração por port em andamento |
 | `gatito-pack` | Validar arquivos, licenças, ABI, permissões, logs e checksums antes de gerar release | Planejamento |
 | `catalog-builder` | Gerar página de ports e feed PortMaster a partir de uma fonte única | Planejamento; requer confirmação do schema PortMaster atual |
 
