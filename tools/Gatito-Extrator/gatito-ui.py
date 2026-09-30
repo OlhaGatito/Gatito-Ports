@@ -1,222 +1,286 @@
 #!/usr/bin/env python3
-"""Standalone Gatito-Extrator visual test UI.
+"""Gatito-Extrator graphical test UI.
 
-The UI stays open after the extraction/validation flow and exposes an explicit
-SAIR option. It is controller-friendly and does not require dialog, X11 or
-Wayland.
+The extractor remains a Python backend. This front-end deliberately does not
+use printf/ANSI as its primary display: it tries SDL2 first and falls back to
+/dev/fb0 with a small software renderer. Controller/input events are read from
+SDL2 or Linux input devices, so a handheld button is not treated as stdin.
 """
-import argparse, os, platform, shutil, subprocess, sys, time
+import argparse
+import ctypes
+import ctypes.util
+import errno
+import fcntl
+import glob
+import mmap
+import os
+import platform
+import select
+import shutil
+import struct
+import subprocess
+import sys
+import time
 from pathlib import Path
 
-BAR = 42
-WIDTH = 68
+FBIOGET_VSCREENINFO = 0x4600
+INPUT_EVENT = struct.Struct("llHHI")
+EV_KEY = 0x01
+KEY_RELEASE = 0
 
+# Small 5x7 font. Only characters needed by the diagnostic UI are included;
+# unknown characters are rendered as spaces.
+FONT = {
+    "A":"01110 10001 10001 11111 10001 10001 10001","B":"11110 10001 10001 11110 10001 10001 11110",
+    "C":"01111 10000 10000 10000 10000 10000 01111","D":"11110 10001 10001 10001 10001 10001 11110",
+    "E":"11111 10000 10000 11110 10000 10000 11111","F":"11111 10000 10000 11110 10000 10000 10000",
+    "G":"01111 10000 10000 10111 10001 10001 01111","H":"10001 10001 10001 11111 10001 10001 10001",
+    "I":"11111 00100 00100 00100 00100 00100 11111","J":"00111 00010 00010 00010 10010 10010 01100",
+    "K":"10001 10010 10100 11000 10100 10010 10001","L":"10000 10000 10000 10000 10000 10000 11111",
+    "M":"10001 11011 10101 10101 10001 10001 10001","N":"10001 11001 10101 10011 10001 10001 10001",
+    "O":"01110 10001 10001 10001 10001 10001 01110","P":"11110 10001 10001 11110 10000 10000 10000",
+    "Q":"01110 10001 10001 10001 10101 10010 01101","R":"11110 10001 10001 11110 10100 10010 10001",
+    "S":"01111 10000 10000 01110 00001 00001 11110","T":"11111 00100 00100 00100 00100 00100 00100",
+    "U":"10001 10001 10001 10001 10001 10001 01110","V":"10001 10001 10001 10001 10001 01010 00100",
+    "W":"10001 10001 10001 10101 10101 10101 01010","X":"10001 10001 01010 00100 01010 10001 10001",
+    "Y":"10001 10001 01010 00100 00100 00100 00100","Z":"11111 00001 00010 00100 01000 10000 11111",
+    "0":"01110 10001 10011 10101 11001 10001 01110","1":"00100 01100 00100 00100 00100 00100 01110",
+    "2":"01110 10001 00001 00010 00100 01000 11111","3":"11110 00001 00001 01110 00001 00001 11110",
+    "4":"00010 00110 01010 10010 11111 00010 00010","5":"11111 10000 10000 11110 00001 00001 11110",
+    "6":"01110 10000 10000 11110 10001 10001 01110","7":"11111 00001 00010 00100 01000 01000 01000",
+    "8":"01110 10001 10001 01110 10001 10001 01110","9":"01110 10001 10001 01111 00001 00001 01110",
+    "%":"10001 00010 00100 01000 10001 00000 00000","-":"00000 00000 00000 11111 00000 00000 00000",
+    ":":"00000 00100 00000 00000 00000 00100 00000",".":"00000 00000 00000 00000 00000 00110 00110",
+    "/":"00001 00010 00100 01000 10000 00000 00000","_":"00000 00000 00000 00000 00000 00000 11111",
+    " ":"00000 00000 00000 00000 00000 00000 00000",
+}
+for k, v in list(FONT.items()):
+    FONT[k] = [int(row, 2) for row in v.split()]
 
-def clear():
-    sys.stdout.write("\033[2J\033[H")
+class Framebuffer:
+    def __init__(self):
+        self.fd = os.open("/dev/fb0", os.O_RDWR)
+        raw = bytearray(160)
+        fcntl.ioctl(self.fd, FBIOGET_VSCREENINFO, raw, True)
+        self.xres, self.yres = struct.unpack_from("II", raw, 0)
+        self.bits = struct.unpack_from("I", raw, 24)[0]
+        self.red = struct.unpack_from("BBBB", raw, 32)
+        self.green = struct.unpack_from("BBBB", raw, 36)
+        self.blue = struct.unpack_from("BBBB", raw, 40)
+        self.line_length = self.xres * max(1, self.bits // 8)
+        self.size = self.line_length * self.yres
+        self.mm = mmap.mmap(self.fd, self.size, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
+    def _pack(self, c):
+        r,g,b = c
+        if self.bits == 16:
+            return struct.pack("<H", ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3))
+        if self.bits == 32:
+            return struct.pack("<I", (r << 16) | (g << 8) | b)
+        return bytes((r,g,b))
+    def fill(self, c):
+        p=self._pack(c); self.mm[:] = p * (self.size // len(p))
+    def rect(self,x,y,w,h,c):
+        if w<=0 or h<=0: return
+        x=max(0,x); y=max(0,y); w=min(w,self.xres-x); h=min(h,self.yres-y)
+        p=self._pack(c)
+        for yy in range(y,y+h):
+            off=yy*self.line_length+x*len(p)
+            self.mm[off:off+w*len(p)] = p*w
+    def text(self,x,y,s,scale=2,c=(235,240,245)):
+        for ch in str(s).upper():
+            glyph=FONT.get(ch,FONT[" "])
+            for row,bits in enumerate(glyph):
+                for col in range(5):
+                    if bits & (1 << (4-col)):
+                        self.rect(x+col*scale,y+row*scale,scale,scale,c)
+            x += 6*scale
+    def close(self):
+        try: self.mm.close()
+        finally: os.close(self.fd)
 
+class SDLUI:
+    def __init__(self):
+        self.lib=None; self.window=None; self.renderer=None; self.texture=None
+        self.enabled=False
+        names=["SDL2","libSDL2-2.0.so.0","libSDL2.so"]
+        for name in names:
+            path=ctypes.util.find_library(name) or name
+            try:
+                lib=ctypes.CDLL(path)
+                if hasattr(lib,"SDL_Init"):
+                    self.lib=lib; break
+            except OSError: pass
+        if not self.lib: return
+        L=self.lib
+        L.SDL_Init.argtypes=[ctypes.c_uint]; L.SDL_Init.restype=ctypes.c_int
+        L.SDL_Quit.argtypes=[]; L.SDL_Quit.restype=None
+        L.SDL_GetError.restype=ctypes.c_char_p
+        L.SDL_CreateWindow.restype=ctypes.c_void_p
+        L.SDL_CreateWindow.argtypes=[ctypes.c_char_p,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_uint]
+        L.SDL_CreateRenderer.restype=ctypes.c_void_p
+        L.SDL_CreateRenderer.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.c_uint]
+        L.SDL_SetRenderDrawColor.argtypes=[ctypes.c_void_p,ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint8]
+        L.SDL_RenderClear.argtypes=[ctypes.c_void_p]; L.SDL_RenderPresent.argtypes=[ctypes.c_void_p]
+        L.SDL_RenderFillRect.argtypes=[ctypes.c_void_p,ctypes.c_void_p]
+        L.SDL_PollEvent.argtypes=[ctypes.c_void_p]; L.SDL_PollEvent.restype=ctypes.c_int
+        # SDL_QUIT=0x100, SDL_KEYDOWN=0x300, SDL_CONTROLLERBUTTONDOWN=0x651, SDL_JOYBUTTONDOWN=0x603.
+        for driver in ("fbcon","kmsdrm","wayland","x11"):
+            if driver == "fbcon" and not os.path.exists("/dev/fb0"): continue
+            os.environ["SDL_VIDEODRIVER"]=driver
+            if L.SDL_Init(0x00000020 | 0x00002000) == 0:
+                self.window=L.SDL_CreateWindow(b"Gatito-Extrator",0,0,640,480,0x00000008)
+                if self.window:
+                    self.renderer=L.SDL_CreateRenderer(self.window,-1,2)
+                    if self.renderer:
+                        self.enabled=True; self.w=640; self.h=480; return
+                L.SDL_Quit()
+        self.lib=None
+    def event(self):
+        if not self.enabled: return False
+        buf=ctypes.create_string_buffer(56)
+        while self.lib.SDL_PollEvent(buf):
+            t=struct.unpack_from("I",buf.raw,0)[0]
+            if t in (0x100,0x300,0x603,0x651): return True
+        return False
+    def draw(self,pct,stage,details):
+        L=self.lib
+        L.SDL_SetRenderDrawColor(self.renderer,10,14,20,255); L.SDL_RenderClear(self.renderer)
+        def rect(x,y,w,h,c):
+            class R(ctypes.Structure): _fields_=[("x",ctypes.c_int),("y",ctypes.c_int),("w",ctypes.c_int),("h",ctypes.c_int)]
+            r=R(x,y,w,h); L.SDL_SetRenderDrawColor(self.renderer,*c,255); L.SDL_RenderFillRect(self.renderer,ctypes.byref(r))
+        rect(24,24,592,432,(22,29,40)); rect(48,104,544,30,(45,52,64))
+        rect(48,104,544*max(0,min(100,pct))//100,30,(65,190,110))
+        rect(48,160,544,2,(65,190,110)); rect(48,384,544,2,(65,190,110))
+        # Keep the SDL screen visual even without a font dependency.
+        self._last=(pct,stage,details)
+        L.SDL_RenderPresent(self.renderer)
+    def close(self):
+        if self.lib:
+            if self.renderer and hasattr(self.lib,"SDL_DestroyRenderer"): self.lib.SDL_DestroyRenderer(self.renderer)
+            if self.window and hasattr(self.lib,"SDL_DestroyWindow"): self.lib.SDL_DestroyWindow(self.window)
+            self.lib.SDL_Quit()
 
-def bar(pct):
-    pct = max(0, min(100, int(pct)))
-    filled = int(BAR * pct / 100)
-    return "[" + "#" * filled + "-" * (BAR - filled) + f"] {pct:3d}%"
+def input_devices():
+    return glob.glob("/dev/input/event*")
 
-
-def draw(pct, stage, details="", log_path="", selected="SAIR"):
-    clear()
-    print("+" + "-" * WIDTH + "+")
-    print("|" + "GATITO-EXTRATOR".center(WIDTH) + "|")
-    print("|" + "Standalone diagnostic / extraction test".center(WIDTH) + "|")
-    print("|" + "".center(WIDTH) + "|")
-    print("|" + bar(pct).center(WIDTH) + "|")
-    print("|" + ("ETAPA: " + stage)[:WIDTH].center(WIDTH) + "|")
-    print("|" + "".center(WIDTH) + "|")
-    recent = details.splitlines()[-4:]
-    for line in recent:
-        print("|" + line[:WIDTH].center(WIDTH) + "|")
-    for _ in range(4 - len(recent)):
-        print("|" + "".center(WIDTH) + "|")
-    print("|" + ("LOG: " + log_path)[:WIDTH].center(WIDTH) + "|")
-    print("|" + "".center(WIDTH) + "|")
-    print("|" + ("[ SAIR ]" if selected == "SAIR" else "  SAIR  ").center(WIDTH) + "|")
-    print("+" + "-" * WIDTH + "+")
-    sys.stdout.flush()
-
+def input_button():
+    fds=[]
+    for p in input_devices():
+        try: fds.append(os.open(p,os.O_RDONLY|os.O_NONBLOCK))
+        except OSError: pass
+    try:
+        while True:
+            r,_,_=select.select(fds,[],[],0.05)
+            for fd in r:
+                try:
+                    data=os.read(fd,INPUT_EVENT.size)
+                    if len(data)==INPUT_EVENT.size:
+                        _,_,typ,code,val=INPUT_EVENT.unpack(data)
+                        if typ==EV_KEY and val==1: return True
+                except OSError as e:
+                    if e.errno != errno.EAGAIN: pass
+    finally:
+        for fd in fds:
+            try: os.close(fd)
+            except OSError: pass
 
 def command_output(cmd):
     try:
-        p = subprocess.run(
-            cmd, text=True, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, timeout=3
-        )
-        return p.stdout.strip()[:500]
-    except Exception as exc:
-        return f"<erro: {exc}>"
+        p=subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=3)
+        return p.stdout.strip().replace("\n"," ")[:500]
+    except Exception as exc: return "<erro: %s>" % exc
 
-
-def collect_data(game_dir, recipe, engine, log):
-    lines = [
-        "Host: " + platform.platform(),
-        "Kernel: " + command_output(["uname", "-a"]),
-        "Python: " + sys.version.split()[0],
-        "GAMEDIR: " + str(game_dir),
-        "Recipe: " + str(recipe),
-        "Engine: " + str(engine),
-        "CFW: " + os.environ.get("CFW_NAME", "unknown"),
-        "DEVICE: " + os.environ.get("DEVICE_NAME", "unknown"),
-        "ARCH: " + os.environ.get("DEVICE_ARCH", platform.machine()),
-        "DISPLAY: " + os.environ.get("DISPLAY", "<none>"),
-        "WAYLAND_DISPLAY: " + os.environ.get("WAYLAND_DISPLAY", "<none>"),
-        "TERM: " + os.environ.get("TERM", "<none>"),
-        "PATH: " + os.environ.get("PATH", "<none>"),
-        "Disk: " + command_output(["df", "-h", str(game_dir)]),
-    ]
-    for path in ("/dev/fb0", "/dev/dri", "/dev/mali0", "/dev/snd"):
-        lines.append(f"{path}: {'present' if os.path.exists(path) else 'missing'}")
-    for tool in ("python3", "bash", "sh", "unzip", "xz", "7z", "dialog"):
-        lines.append(f"tool {tool}: {'yes' if shutil.which(tool) else 'no'}")
-    Path(log).parent.mkdir(parents=True, exist_ok=True)
-    with open(log, "a", encoding="utf-8") as f:
-        f.write("\n=== Gatito-Extrator diagnostics ===\n")
-        f.write("\n".join(lines) + "\n")
+def collect_data(game_dir,recipe,engine,log):
+    lines=["Host: "+platform.platform(),"Kernel: "+command_output(["uname","-a"]),
+           "Python: "+sys.version.split()[0],"GAMEDIR: "+str(game_dir),
+           "Recipe: "+str(recipe),"Engine: "+str(engine),
+           "CFW: "+os.environ.get("CFW_NAME","unknown"),
+           "DEVICE: "+os.environ.get("DEVICE_NAME","unknown"),
+           "ARCH: "+os.environ.get("DEVICE_ARCH",platform.machine()),
+           "DISPLAY: "+os.environ.get("DISPLAY","<none>"),
+           "WAYLAND_DISPLAY: "+os.environ.get("WAYLAND_DISPLAY","<none>"),
+           "TERM: "+os.environ.get("TERM","<none>"),"PATH: "+os.environ.get("PATH","<none>"),
+           "Disk: "+command_output(["df","-h",str(game_dir)])]
+    for path in ("/dev/fb0","/dev/dri","/dev/mali0","/dev/snd"):
+        lines.append("%s: %s" % (path,"present" if os.path.exists(path) else "missing"))
+    lines.append("SDL2: %s" % ("available" if ctypes.util.find_library("SDL2") else "not found"))
+    for tool in ("python3","bash","sh","unzip","xz","7z"):
+        lines.append("tool %s: %s" % (tool,"yes" if shutil.which(tool) else "no"))
+    Path(log).parent.mkdir(parents=True,exist_ok=True)
+    with open(log,"a",encoding="utf-8") as f: f.write("\n=== Gatito-Extrator diagnostics ===\n"+"\n".join(lines)+"\n")
     return lines
 
-
-def demo(log):
-    for pct, stage in [
-        (0, "Inicializando interface"),
-        (15, "Coletando ambiente"),
-        (35, "Detectando ferramentas"),
-        (55, "Simulando staging"),
-        (75, "Validando artefatos"),
-        (92, "Preparando publicação"),
-        (100, "Teste visual concluído"),
-    ]:
-        draw(pct, stage, "Interface ativa — fluxo ainda não encerrado", log)
-        time.sleep(0.45)
-
-
-def wait_menu(log, pct, stage, details):
-    """Test-only hold screen: any received key/button input closes the UI.
-
-    This is intentionally simple and temporary. On handhelds without a
-    keyboard, the terminal/input path used by the launcher can provide the
-    button event; the final graphical UI will use native controller events.
-    """
-    draw(pct, stage, details, log, "SAIR")
-    print("\nPressione QUALQUER BOTÃO para sair.", flush=True)
-
-    # Read one character without requiring ENTER when stdin is a TTY.
-    # Fall back to input() if raw terminal mode is unavailable.
-    try:
-        import termios
-        import tty
-        fd = sys.stdin.fileno()
-        if os.isatty(fd):
-            old_attrs = termios.tcgetattr(fd)
-            try:
-                tty.setraw(fd)
-                sys.stdin.read(1)
-            finally:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
-            return
-    except (ImportError, OSError, termios.error, EOFError):
-        pass
-
-    try:
-        input()
-    except EOFError:
-        return
-
+def fb_draw(fb,pct,stage,details):
+    fb.fill((10,14,20))
+    w,h=fb.xres,fb.yres; scale=max(1,min(4,w//320))
+    fb.rect(10,10,w-20,h-20,(22,29,40))
+    fb.text(24,24,"GATITO EXTRATOR",scale)
+    fb.text(24,52,"ETAPA",scale,(120,200,140)); fb.text(24,72,stage[:max(1,w//(6*scale)-4)],scale)
+    y=100 if h>=240 else 70
+    fb.rect(24,y,w-48,24,(45,52,64)); fb.rect(24,y,(w-48)*max(0,min(100,pct))//100,24,(65,190,110))
+    fb.text(24,y+34,"%d%%" % pct,scale)
+    fb.text(24,y+60,"INTERFACE GRAFICA ATIVA",scale,(120,200,140))
+    fb.text(24,y+84,"BOTAO: SAIR APOS O TESTE",scale)
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--game-dir", required=True)
-    ap.add_argument("--recipe", required=True)
-    ap.add_argument("--engine", required=True)
-    ap.add_argument("--log", required=True)
-    ap.add_argument("--input")
-    ap.add_argument("--abi")
-    ap.add_argument("--demo", action="store_true")
-    ap.add_argument("--no-pause", action="store_true")
-    a = ap.parse_args()
-
-    game_dir = Path(a.game_dir).resolve()
-    recipe = Path(a.recipe).resolve()
-    engine = Path(a.engine).resolve()
-    details = collect_data(game_dir, recipe, engine, a.log)
-    draw(5, "Ambiente detectado", "\n".join(details[-4:]), a.log)
-
-    if a.demo:
-        demo(a.log)
-        rc = 0
-        final_stage = "Teste visual concluído"
-    else:
-        if not engine.is_file():
-            draw(100, "ERRO — engine não encontrada",
-                 f"Arquivo: {engine}\nUse a engine existente do repositório.", a.log)
-            rc = 1
-            final_stage = "ERRO — engine não encontrada"
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--game-dir",required=True); ap.add_argument("--recipe",required=True)
+    ap.add_argument("--engine",required=True); ap.add_argument("--log",required=True)
+    ap.add_argument("--input"); ap.add_argument("--abi"); ap.add_argument("--demo",action="store_true")
+    ap.add_argument("--no-pause",action="store_true"); a=ap.parse_args()
+    game_dir=Path(a.game_dir).resolve(); recipe=Path(a.recipe).resolve(); engine=Path(a.engine).resolve()
+    details=collect_data(game_dir,recipe,engine,a.log)
+    ui=SDLUI(); fb=None if ui.enabled else (Framebuffer() if os.path.exists("/dev/fb0") else None)
+    if not ui.enabled and not fb:
+        print("GATITO UI ERROR: SDL2 e /dev/fb0 indisponiveis",file=sys.stderr); return 2
+    def draw(p,s,d):
+        if ui.enabled: ui.draw(p,s,d)
+        else: fb_draw(fb,p,s,d)
+    try:
+        draw(5,"AMBIENTE DETECTADO","\n".join(details[-4:]))
+        if a.demo:
+            for p,s in [(0,"INICIALIZANDO"),(15,"COLETANDO AMBIENTE"),(35,"DETECTANDO FERRAMENTAS"),
+                        (55,"SIMULANDO STAGING"),(75,"VALIDANDO ARTEFATOS"),(92,"PUBLICANDO"),(100,"TESTE CONCLUIDO")]:
+                draw(p,s,"Interface grafica ativa"); time.sleep(.45)
+            rc=0; final="TESTE CONCLUIDO"
+        elif not engine.is_file():
+            draw(100,"ERRO ENGINE NAO ENCONTRADA",str(engine)); rc=1; final="ERRO"
         else:
-            cmd = [
-                sys.executable, str(engine), str(recipe),
-                "--game-dir", str(game_dir), "--validation-delay", "0.15"
-            ]
-            if a.input:
-                cmd += ["--input", a.input]
-            if a.abi:
-                cmd += ["--abi", a.abi]
-            draw(8, "Iniciando extrator",
-                 "Interface permanece aberta durante o processo", a.log)
-            with open(a.log, "a", encoding="utf-8") as logf:
-                logf.write("\n=== Gatito-Extrator run ===\n")
-                logf.write("CMD: " + " ".join(cmd) + "\n")
-                p = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    text=True, bufsize=1
-                )
-                last = "Executando..."
-                pct = 8
-                for raw in p.stdout:
-                    line = raw.rstrip()
-                    logf.write(line + "\n")
-                    if line.startswith("GATITO_STAGE|"):
-                        try:
-                            _, value, msg = line.split("|", 2)
-                            pct = int(value)
-                            last = msg
-                        except ValueError:
-                            last = line
-                    elif line:
-                        last = line[:WIDTH]
-                    draw(
-                        pct, last,
-                        "Processo ativo — saída também registrada no log",
-                        a.log
-                    )
-                rc = p.wait()
-            final_stage = (
-                "CONCLUÍDO — artefatos validados"
-                if rc == 0 else "ERRO — processo terminou"
-            )
-            draw(
-                100 if rc == 0 else pct,
-                final_stage,
-                f"exit={rc}\nLog preservado para análise",
-                a.log,
-            )
+            cmd=[sys.executable,str(engine),str(recipe),"--game-dir",str(game_dir),"--validation-delay","0.15"]
+            if a.input: cmd += ["--input",a.input]
+            if a.abi: cmd += ["--abi",a.abi]
+            draw(8,"INICIANDO EXTRATOR","Interface grafica permanece na tela")
+            with open(a.log,"a",encoding="utf-8") as logf:
+                logf.write("\n=== Gatito-Extrator run ===\nCMD: "+" ".join(cmd)+"\n")
+                p=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1)
+                pct=8; last="EXECUTANDO"
+                while True:
+                    line=p.stdout.readline()
+                    if line:
+                        line=line.rstrip(); logf.write(line+"\n")
+                        if line.startswith("GATITO_STAGE|"):
+                            try: _,v,msg=line.split("|",2); pct=int(v); last=msg
+                            except ValueError: pass
+                        elif line: last=line[:80]
+                        draw(pct,last,"PROCESSO ATIVO")
+                    elif p.poll() is not None: break
+                    else:
+                        if ui.event(): p.terminate(); rc=0; break
+                        draw(pct,last,"PROCESSO ATIVO"); time.sleep(.05)
+                if p.poll() is None: p.wait()
+                rc=p.returncode
+            final="CONCLUIDO" if rc==0 else "ERRO - PROCESSO TERMINOU"
+            draw(100 if rc==0 else pct,final,"ARQUIVOS E LOG PRESERVADOS")
+        if not a.no_pause:
+            draw(100 if rc==0 else 0,final,"PRESSIONE QUALQUER BOTAO PARA SAIR")
+            if ui.enabled:
+                while not ui.event(): time.sleep(.03)
+            else:
+                while not input_button(): pass
+        return rc
+    finally:
+        if fb: fb.close()
+        ui.close()
 
-    # Keep the UI visible until the user explicitly chooses SAIR.
-    if not a.no_pause:
-        wait_menu(
-            a.log,
-            100 if rc == 0 else 0,
-            final_stage,
-            "O fluxo terminou. A interface permanece aberta.\n"
-            "Escolha SAIR para encerrar.",
-        )
-    return rc
-
-
-if __name__ == "__main__":
+if __name__=="__main__":
     raise SystemExit(main())
