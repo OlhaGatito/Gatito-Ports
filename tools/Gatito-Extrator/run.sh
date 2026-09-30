@@ -6,14 +6,14 @@ set +u
 GAMEDIR="$(CDPATH= cd -- "$(dirname "$0")" 2>/dev/null && pwd -P)" || exit 1
 cd "$GAMEDIR" || exit 1
 
-LOGDIR="\${GATITO_LOG_DIR:-$GAMEDIR/logs}"
+LOGDIR="${GATITO_LOG_DIR:-$GAMEDIR/logs}"
 mkdir -p "$LOGDIR" 2>/dev/null || true
-LOG="\${GATITO_LOG:-$LOGDIR/gatito-extrator.log}"
+LOG="${GATITO_LOG:-$LOGDIR/gatito-extrator.log}"
 
-GAME_DIR="\${GATITO_GAME_DIR:-$GAMEDIR/test-game}"
-ENGINE="\${GATITO_ENGINE:-$GAMEDIR/../gatito-extract/gatito-extract-v2.py}"
-RECIPE="\${GATITO_RECIPE:-$GAMEDIR/extractor.example.json}"
-PYTHON="\${PYTHON:-python3}"
+GAME_DIR="${GATITO_GAME_DIR:-$GAMEDIR/test-game}"
+ENGINE="${GATITO_ENGINE:-$GAMEDIR/../gatito-extract/gatito-extract-v2.py}"
+RECIPE="${GATITO_RECIPE:-$GAMEDIR/extractor.example.json}"
+PYTHON="${PYTHON:-python3}"
 
 INPUT=""
 ABI=""
