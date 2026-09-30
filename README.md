@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐈 Gatito Ports
+<h1><img src="assets/sarue.svg" alt="Saruê" width="48" height="48" valign="middle" /> Gatito Ports</h1>
 
 ### Ports e ferramentas de compatibilidade para handhelds Linux
 
