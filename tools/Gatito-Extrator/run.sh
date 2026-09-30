@@ -11,7 +11,18 @@ mkdir -p "$LOGDIR" 2>/dev/null || true
 LOG="${GATITO_LOG:-$LOGDIR/gatito-extrator.log}"
 
 GAME_DIR="${GATITO_GAME_DIR:-$GAMEDIR/test-game}"
-ENGINE="${GATITO_ENGINE:-$GAMEDIR/../gatito-extract/gatito-extract-v2.py}"
+# The repository currently ships gatito-extract.py. Keep an override for tests
+# and future engine revisions, but never point at a file that does not exist.
+ENGINE="${GATITO_ENGINE:-}"
+if [ -z "$ENGINE" ]; then
+    for candidate in         "$GAMEDIR/../gatito-extract/gatito-extract.py"         "$GAMEDIR/../gatito-extract/gatito-extract-v3.py"         "$GAMEDIR/../gatito-extract/gatito-extract-v2.py"
+    do
+        if [ -f "$candidate" ]; then
+            ENGINE="$candidate"
+            break
+        fi
+    done
+fi
 RECIPE="${GATITO_RECIPE:-$GAMEDIR/extractor.example.json}"
 PYTHON="${PYTHON:-python3}"
 
@@ -34,11 +45,7 @@ done
 
 export GATITO_EXTRATOR_LOG="$LOG"
 
-set -- "$PYTHON" "$GAMEDIR/gatito-ui.py" \
-    --game-dir "$GAME_DIR" \
-    --recipe "$RECIPE" \
-    --engine "$ENGINE" \
-    --log "$LOG"
+set -- "$PYTHON" "$GAMEDIR/gatito-ui.py"     --game-dir "$GAME_DIR"     --recipe "$RECIPE"     --engine "$ENGINE"     --log "$LOG"
 [ -n "$INPUT" ] && set -- "$@" --input "$INPUT"
 [ -n "$ABI" ] && set -- "$@" --abi "$ABI"
 [ "$DEMO" -eq 1 ] && set -- "$@" --demo
