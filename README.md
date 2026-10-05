@@ -82,7 +82,3 @@
 Todo o código está sob **GPL‑2.0‑or‑later**. Para detalhes, veja `Main/LICENSE`.
 
 ---
-
-### 🎉 Pronto!
-
-Agora o repositório exibe apenas o que o usuário final precisa (instalação e execução); toda a "bagunça" de desenvolvimento, regras e documentação detalhada está centralizada no **repositório `Main`**, facilitando a manutenção e mantendo o foco do usuário em uma interface limpa.
