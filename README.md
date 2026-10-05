@@ -1,65 +1,88 @@
+# 🧩 Gatito Ports
+
+> **Catálogo colaborativo** de ports, ferramentas e scripts para handhelds Linux (Rockchip / RK3326, etc.).
+
 <div align="center">
 
-<h1><img src="assets/sarue.svg" alt="Saruê" width="48" height="48" valign="middle" /> Gatito Ports</h1>
-
-### Ports e ferramentas de compatibilidade para handhelds Linux
-
-Projetos Android, Marmalade S3E e Unity em pesquisa — com foco em ports reproduzíveis, perfis seguros e dados fornecidos pelo usuário.
-
-[![Status](https://img.shields.io/badge/status-pesquisa%20e%20prot%C3%B3tipos-f59e0b?style=for-the-badge)](https://github.com/OlhaGatito/Gatito-Ports)
-[![Catálogo](https://img.shields.io/badge/ports-5%20catalogados-2563eb?style=for-the-badge)](catalog/ports.json)
-[![Dados](https://img.shields.io/badge/jogos-dados%20do%20usu%C3%A1rio-16a34a?style=for-the-badge)](#aviso-sobre-dados-e-licen%C3%A7a)
-[![Releases](https://img.shields.io/badge/releases-ainda%20n%C3%A3o%20publicadas-64748b?style=for-the-badge)](https://github.com/OlhaGatito/Gatito-Ports/releases)
-
-[📚 Catálogo](catalog/ports.json) · [🧭 Roadmap](docs/ROADMAP.md) · [🧩 Arquitetura](docs/ARCHITECTURE.md) · [🛠️ Ferramentas](tools/README.md)
+[![Status – pesquisa](https://img.shields.io/badge/status-pesquisa%20e%20prot%C3%B3tipos-f59e0b?style=for-the-badge)]
+[![Catálogo – 5 ports](https://img.shields.io/badge/ports-5%20catalogados-2563eb?style=for-the-badge)]
+[![Releases – nenhum](https://img.shields.io/badge/releases-ainda%20n%C3%A3o%20publicadas-64748b?style=for-the-badge)]
 
 </div>
 
 ---
 
-**Estado do projeto:** fundação em andamento. As fichas abaixo representam pesquisa e protótipos; ainda não são ports prontos para instalar.
+## 📦 O que você encontra aqui
 
-## O que queremos construir
+| 🎲 Port | Runtime / ABI | Estado |
+|---------|----------------|--------|
+| **Need for Speed Shift** | Android / Marmalade S3E / ARM32 hard‑float | Jogável em muOS (áudio ainda não funciona) |
+| **The Sims 3** | Android / Marmalade S3E / ARM32 hard‑float | Loader validado parcialmente; gameplay em teste |
+| **Sonic 4 Episode I** | Android / Marmalade S3E / ARM32 | Investigação inicial |
+| **Minishoots Adventure** | Android / Unity IL2CPP / ARM64 | Investigação de binário e dependências |
+| **Dungeon Hunter 4** | Android / ARMv7 | Análise de ABI, JNI/Bionic, gráficos, áudio |
 
-- ports organizados por jogo e runtime, com suporte a vários CFWs quando houver teste real;
-- instalação dos dados a partir da cópia do usuário, sem distribuir APKs, OBBs, assets, saves ou bibliotecas proprietárias;
-- perfis de execução que identificam aparelho/CFW/stack com segurança e preservam o ambiente padrão quando não há perfil comprovado;
-- ferramentas próprias para inventário do aparelho, extração/instalação transacional de dados, empacotamento e geração de catálogo;
-- registros de compatibilidade ligados ao aparelho, firmware, artefato e log testados.
+> ⚠️ **Aviso de dados:** este repositório **não** inclui APKs, OBBs, assets, bibliotecas proprietárias ou saves. Você deve prover esses arquivos legalmente a partir do seu próprio backup.
 
-## Projetos acompanhados
+---
 
-| Port | Origem/runtime | Situação registrada |
-|---|---|---|
-| Need for Speed Shift | Android / Marmalade S3E / ARM32 hard-float | Jogável em teste muOS; áudio ainda não funciona |
-| The Sims 3 | Android / Marmalade S3E / ARM32 hard-float | Loader validado parcialmente; gameplay ainda sem confirmação no registro |
-| Sonic 4 Episode I | Android / Marmalade S3E / ARM32 | Investigação; validar pacote e dados antes de avançar o loader |
-| Minishoots Adventure | Android / Unity 6 IL2CPP / ARM64 | Investigação de binário, metadata e runtime |
-| Dungeon Hunter 4 | Android / ARMv7 | Investigação de ABI, JNI/Bionic, OBB, gráficos e input |
+## 🛠️ Ferramentas incluídas
 
-O estado inicial fica em [catalog/ports.json](catalog/ports.json). O [modelo de arquitetura](docs/ARCHITECTURE.md), o [roadmap](docs/ROADMAP.md) e o [modelo de relatório de compatibilidade](docs/COMPATIBILITY-REPORT-TEMPLATE.md) registram como vamos transformar essas investigações em ports reproduzíveis.
+| 🧰 Ferramenta | Função |
+|---------------|--------|
+| `gatito‑probe.sh` | Coleta informações do sistema (CPU, GPU, CFW, versão). |
+| `gatito‑extract/` | Implementação do **NXExtract** (stage → hooks → validation → commit) usado pelos ports. |
+| `scripts/` | Scripts de setup e execução (`setup.sh`, `run.sh`). |
 
-## Princípios
+> 📖 **Documentação completa** das ferramentas está na pasta `tools/` do repositório **`Main`**.
 
-1. Confirmar jogo, versão, pacote, ABI e dados antes de mexer no loader.
-2. Separar loader/runtime, SDL, vídeo, áudio, input e launcher ao diagnosticar.
-3. Começar pelo ambiente que PortMaster/CFW já prepara; aplicar overrides só com evidência para aquela combinação.
-4. Distinguir documentado, provável e confirmado em hardware.
-5. Não marcar compatibilidade com um CFW por ter iniciado em outro aparelho ou firmware.
-6. Guardar artefatos e logs com identificador de versão, sem enviar conteúdo proprietário.
+---
 
-## Ferramentas
+## 📚 Documentação (centralizada)
 
-[tools/gatito-probe.sh](tools/gatito-probe.sh) coleta informações do sistema e da stack gráfica em modo somente leitura. Ela não escolhe nem altera drivers; ajuda a construir a matriz de perfis com dados reais. Veja [como executar e interpretar](tools/README.md). O [Gatito Extractor](tools/gatito-extract/README.md) é o novo ramo de ferramentas para extração BYO-data, baseado nos princípios públicos do NXExtract.
+| Documento | Localização |
+|-----------|--------------|
+| 📖 Catálogo de ports (JSON) | `Main/catalog/ports.json` |
+| 🧭 Roadmap do projeto | `Main/docs/ROADMAP.md` |
+| 🏗️ Arquitetura geral | `Main/docs/ARCHITECTURE.md` |
+| ✅ Checklist de diagnóstico | `Main/docs/CHECKLIST.md` |
+| 🗂️ Modelo de relatório de compatibilidade | `Main/docs/COMPATIBILITY-REPORT-TEMPLATE.md` |
+| 📖 Guia de contribuição | `Main/CONTRIBUTING.md` |
+| 🔐 Política de segurança | `Main/SECURITY.md` |
 
-## Próximos passos
+---
 
-Veja [docs/ROADMAP.md](docs/ROADMAP.md) para as fases de catálogo, diagnóstico, instalação de dados, launcher por perfil e publicação.
+## 🚀 Como usar (passo‑a‑passo rápido)
 
-## Base técnica
+1. **Clone** este repositório.
+2. **Coloque** o APK/OBB do jogo na pasta `data/` do port desejado.
+3. Execute o script de *setup*:
+   ```bash
+   ./setup.sh   # prepara o stage, extrai o .s3e, gera .dz, etc.
+   ```
+4. Rode o port:
+   ```bash
+   ./run.sh
+   ```
 
-O projeto estuda fluxos públicos como o [NextOS Universal Ports](https://github.com/NextOs-Ports/nextos-universal-ports) para entender catálogo, pacotes BYO-data, instalação e publicação. O Gatito terá identidade, código, documentação e ferramentas próprias; não reutiliza código do NextOS sem verificar licença e atribuição.
+> Os scripts exibem logs no terminal e criam arquivos de diagnóstico em `logs/`.
 
-## Aviso sobre dados e licença
+---
 
-Os ports exigem arquivos obtidos legitimamente pelo usuário. Nenhum dado de jogo é distribuído por este repositório. Nenhuma licença geral de código foi escolhida ainda; cada componente deverá declarar sua licença antes da primeira release.
+## 🧑‍💻 Contribuindo
+
+1. **Fork** o repositório **`Main`** (código‑fonte, scripts e documentação). 
+2. Adicione ou melhore um port, atualize `catalog/ports.json` e envie um *pull‑request* para `Main`. 
+3. Quando o CI (GitHub Actions) validar o build, uma nova *release* será criada automaticamente neste repositório (`Gatito‑Ports`) contendo apenas os binários e scripts prontos para o usuário final.
+
+---
+
+## ⚖️ Licença
+
+Todo o código está sob **GPL‑2.0‑or‑later**. Para detalhes, veja `Main/LICENSE`.
+
+---
+
+### 🎉 Pronto!
+
+Agora o repositório exibe apenas o que o usuário final precisa (instalação e execução); toda a "bagunça" de desenvolvimento, regras e documentação detalhada está centralizada no **repositório `Main`**, facilitando a manutenção e mantendo o foco do usuário em uma interface limpa.
