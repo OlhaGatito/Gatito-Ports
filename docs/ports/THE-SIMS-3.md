@@ -1,28 +1,37 @@
-# Port — The Sims 3 🚧
+# Port — The Sims 3 ✅
 
-> Fonte do catálogo: `catalog/ports.json` (`the-sims-3`) · memória técnica: [Lembra-e-Aprendizado-com-IA / Ports/The-Sims-3](https://github.com/OlhaGatito/Lembra-e-Aprendizado-com-IA)
+> Fonte do catálogo: `catalog/ports.json` (`the-sims-3`) · **repositório do port: [The-Sims-3-Android-port](https://github.com/OlhaGatito/The-Sims-3-Android-port)**
 
 | Campo | Valor |
 |---|---|
-| Plataforma | Android → handheld ARM |
+| Plataforma | Android → handheld ARM (muOS / PortMaster / R36S) |
 | Runtime | Marmalade S3E · ARM32 hard-float |
-| Extração | NXExtract (stage → hooks → validation → commit) **validado** |
-| Status | 🚧 loader validado; gameplay depende de validação gráfica/dispositivo |
-| Evidência | RG351MP/dArkOSRE — log parcial ("incomplete-log") |
+| Extração | NXExtract (stage → hooks → validation → commit) validada |
+| Status | ✅ **TOTALMENTE JOGÁVEL em muOS, sem falhas** (confirmação do usuário, 2026-10-21) |
 | Engine ficha | [Engine/Marmalade-S3E](../../Engine/Marmalade-S3E/README.md) |
 
 ## Requisitos
-- APK/OBB próprio + launcher NXExtract com dados BYO
-- Aparelho com GLES (HW support) — veja problema abaixo
+- APK/OBB do seu backup próprio (BYO-data; nada é distribuído)
+- muOS/PortMaster no aparelho; ~2 GB para dados extraídos
 
 ## Passo a passo (resumo)
-1. NXExtract na receita do port (transacional, com validação por etapa).
-2. Gate pré-loader → validação da extração → runtime.
-3. Launcher único (runtime) — ver Guia de Compilação `projetos/The-Sims-3/NXEXTRACT-LAUNCHER.md`.
+1. Baixar o ZIP do [repositório do port](https://github.com/OlhaGatito/The-Sims-3-Android-port) (botão Code → Download ZIP).
+2. Copiar a pasta do port para a pasta de ports do firmware.
+3. Preparar os arquivos do jogo conforme `INSTAL.md` do port.
+4. Abrir **The Sims 3** pelo PortMaster.
+
+Reconstrução a partir do APK (opcional):
+```sh
+bash Sims3/scripts/reconstruct-port.sh [CAMINHO_DO_APK]
+```
+
+## Problemas históricos (resolvidos)
+- `This build does not support SW rendering...` — ambiente sem GLES no início da investigação; superado com validação no aparelho.
+- Gate pré-loader / extração transacional — validados e consolidados no launcher nxbootstrap do port.
 
 ## Problemas conhecidos
-- `This build does not support SW rendering, and the device does not have HW support.` — ambiente sem GLES; **não é bug do loader**.
-- Áudio: precisa manter o ambiente de áudio conhecido do NFS enquanto revisa o launcher (próxima etapa).
+- Extensão de primeira execução depende da receita de extração reconhecer a cópia do APK do usuário (por versão).
 
-## Correções aplicadas
-- Extração transacional validada (logs completos exigidos no catálogo: `evidence_level: incomplete-log` até ter re-teste).
+## Logs/evidências
+- RE de S3E: plugin Ghidra `S3ELoader/` no repositório do port.
+- Relatório de acesso ao aparelho (R36S via USB) sanitizado no repo do port.

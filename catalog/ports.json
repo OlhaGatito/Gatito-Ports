@@ -28,18 +28,19 @@
       "source_platform": "Android",
       "runtime": "Marmalade S3E",
       "target_abi": "ARM32 hard-float",
-      "status": "investigation",
+      "status": "playable",
       "game_data_required": true,
       "package_release_available": false,
+      "repository": "https://github.com/OlhaGatito/The-Sims-3-Android-port",
       "observations": [
         {
-          "device": "RG351MP",
-          "system": "dArkOSRE",
-          "result": "Available log confirms loader validation only; full game outcome is unknown.",
-          "evidence_level": "incomplete-log"
+          "device": "R36S / muOS",
+          "system": "muOS",
+          "result": "Totalmente jogável, sem falhas (confirmação do usuário, 2026-10-21).",
+          "evidence_level": "physical-test-user-confirmed"
         }
       ],
-      "next_step": "Reproduce with a complete log and preserve the known-good audio environment while reviewing launcher changes."
+      "next_step": "Port validado no aparelho; manter receita de extração atualizada por versão do APK (BYO-data)."
     },
     {
       "id": "sonic-4-episode-i",

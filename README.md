@@ -47,7 +47,7 @@ Status: ✅ jogável · 🟨 quase · 🚧 em andamento · ❌ com falha / inves
 | Port | Runtime / método | Status | Doc |
 |---|---|:---:|---|
 | Need for Speed Shift | Marmalade S3E · ARM32 hf · loader próprio + DZ/LZMA | 🟨 jogável em muOS 640×480, sem áudio | [docs/ports/NFS-SHIFT.md](docs/ports/NFS-SHIFT.md) |
-| The Sims 3 | Marmalade S3E · ARM32 hf · NXExtract (stage/commit validado) | 🚧 loader validado, gameplay pendente (GLES) | [docs/ports/THE-SIMS-3.md](docs/ports/THE-SIMS-3.md) |
+| The Sims 3 | Marmalade S3E · ARM32 hf · NXExtract (stage/commit validado) | ✅ **jogável em muOS, sem falhas** | [docs/ports/THE-SIMS-3.md](docs/ports/THE-SIMS-3.md) |
 | Sonic 4 Episode I | Marmalade S3E · ARM32 · RE do formato DZ | ❌ investigação (553 itens, `attr_end=0x43F5`) | [docs/ports/SONIC-4-EP1.md](docs/ports/SONIC-4-EP1.md) |
 | Minishoots Adventure | Unity 6 IL2CPP · AArch64 | ❌ validando binário/metadata | [docs/ports/MINISHOOTS.md](docs/ports/MINISHOOTS.md) |
 | Dungeon Hunter 4 | Android nativo · ARMv7 (ABI a definir) | ❌ mapeando ELF/JNI/GLES/áudio | [docs/ports/DUNGEON-HUNTER-4.md](docs/ports/DUNGEON-HUNTER-4.md) |
