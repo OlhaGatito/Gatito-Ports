@@ -43,7 +43,6 @@ A pasta `BUILD.ui/` recebe eventos reais do motor e mantém uma barra central de
 | Ferramenta | Objetivo | Estado |
 |---|---|---|
 | `gatito-profile` | Resolver perfis por fingerprint exato do aparelho/CFW/runtime, com fallback para o ambiente padrão | Planejamento; aguarda relatórios reais de vários aparelhos |
-| `gatito-extract` | Instalar dados BYO a partir de receitas, com staging, validação por etapa e UI de progresso | Implementação inicial; integração por port em andamento |
 | `gatito-pack` | Validar arquivos, licenças, ABI, permissões, logs e checksums antes de gerar release | Planejamento |
 | `catalog-builder` | Gerar página de ports e feed PortMaster a partir de uma fonte única | Planejamento; requer confirmação do schema PortMaster atual |
 

@@ -1,0 +1,29 @@
+# Gatito-Ports — dados de jogo nunca entram
+*.apk
+*.obb
+*.idx
+*.data
+*.save
+*.s3e
+*.s3e.unpacked
+*.dz
+*.so
+*.a
+*.o
+*.bin
+*.exe
+
+# Runs e staging local
+gamedata/
+data/
+logs/
+run.out
+run.log
+gatito-system-report.txt
+extract/
+stage/
+
+# Sistema
+Thumbs.db
+.DS_Store
+*.bak

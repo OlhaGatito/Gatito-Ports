@@ -76,6 +76,42 @@
       "package_release_available": false,
       "observations": [],
       "next_step": "Inspect ELF dependencies, Bionic/JNI requirements, OBB access, input events, and graphics initialization."
+    },
+    {
+      "id": "monster-hunter-tri",
+      "title": "Monster Hunter Tri",
+      "source_platform": "Wii",
+      "runtime": "N/A — abordagem a decidir",
+      "target_abi": "PC (x86-64) — análise inicial",
+      "status": "investigation",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Decidir abordagem (recomp/decomp vs emulação) antes de gastar esforço de engenharia."
+    },
+    {
+      "id": "spartanport-gow3",
+      "title": "SpartanPort (God of War III Remastered)",
+      "source_platform": "PS4",
+      "runtime": "Native x86-64 + Vulkan (projeto externo de estudo)",
+      "target_abi": "PC (Windows/Linux)",
+      "status": "reference-study",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Estudar pipeline do projeto base (SpartanPort) como referência de técnicas para ports PS4."
+    },
+    {
+      "id": "bloodborne-bbport",
+      "title": "Bloodborne (bbport, Supermedo)",
+      "source_platform": "PS4",
+      "runtime": "Native x86-64 + Vulkan (projeto externo de estudo)",
+      "target_abi": "PC (Windows)",
+      "status": "reference-study",
+      "game_data_required": true,
+      "package_release_available": false,
+      "observations": [],
+      "next_step": "Catalogar técnicas do projeto base (dump CUSA03173 v1.09) para referência."
     }
   ]
 }

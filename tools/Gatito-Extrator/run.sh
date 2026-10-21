@@ -11,11 +11,11 @@ mkdir -p "$LOGDIR" 2>/dev/null || true
 LOG="${GATITO_LOG:-$LOGDIR/gatito-extrator.log}"
 
 GAME_DIR="${GATITO_GAME_DIR:-$GAMEDIR/test-game}"
-# The repository currently ships gatito-extract.py. Keep an override for tests
-# and future engine revisions, but never point at a file that does not exist.
+# Engine discovery: v2 first (current), then v1. The repo no longer lists v3;
+# keep an override via GATITO_ENGINE for future revisions.
 ENGINE="${GATITO_ENGINE:-}"
 if [ -z "$ENGINE" ]; then
-    for candidate in         "$GAMEDIR/../gatito-extract/gatito-extract.py"         "$GAMEDIR/../gatito-extract/gatito-extract-v3.py"         "$GAMEDIR/../gatito-extract/gatito-extract-v2.py"
+    for candidate in         "$GAMEDIR/../gatito-extract/gatito-extract-v2.py"         "$GAMEDIR/../gatito-extract/gatito-extract.py"
     do
         if [ -f "$candidate" ]; then
             ENGINE="$candidate"
